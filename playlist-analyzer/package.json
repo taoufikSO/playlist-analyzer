@@ -9,6 +9,9 @@
   "lint": "eslint .",
   "preview": "vite preview"
 },
+
+
+
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
     "axios": "^1.12.2",
@@ -19,6 +22,7 @@
     "react-router-dom": "^7.9.1"
   },
   "devDependencies": {
+
     "@eslint/js": "^9.36.0",
     "@types/express": "^5.0.3",
     "@types/react": "^19.1.13",
