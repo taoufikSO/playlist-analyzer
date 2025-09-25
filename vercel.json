@@ -1,8 +1,10 @@
 ﻿{
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/callback", "dest": "/" },
+    { "src": "/(.*)", "dest": "/" }
   ]
 }
