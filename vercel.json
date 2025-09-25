@@ -1,7 +1,8 @@
 ﻿{
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/callback", "dest": "/" },
-    { "src": "/.*", "dest": "/" }
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

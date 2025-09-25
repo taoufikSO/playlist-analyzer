@@ -1,38 +1,66 @@
-// src/App.jsx (UPDATE EXISTING)
-// ============================================
-// Update App.jsx to use the new auth system
-
 import { Routes, Route } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import Home from './components/Home'
-import Callback from './components/Callback'
 import Dashboard from './components/Dashboard'
-import { getValidAccessToken, logout as authLogout } from './utils/spotifyAuth'
+import { getTokenFromUrl, validateState, storeToken, getValidToken, clearToken, cleanUrl } from './utils/spotifyAuth'
 
 function App() {
   const [token, setToken] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const validToken = await getValidAccessToken()
-        if (validToken) {
-          setToken(validToken)
+    const initAuth = () => {
+      // Check if we're on callback URL
+      if (window.location.hash.includes('access_token')) {
+        handleCallback()
+      } else {
+        // Check for existing valid token
+        const existingToken = getValidToken()
+        if (existingToken) {
+          setToken(existingToken)
         }
-      } catch (error) {
-        console.error('Auth initialization failed:', error)
-      } finally {
         setLoading(false)
       }
     }
 
-    initializeAuth()
+    const handleCallback = () => {
+      const tokenData = getTokenFromUrl()
+      
+      if (tokenData.error) {
+        setError(`Authentication failed: ${tokenData.error}`)
+        cleanUrl()
+        setLoading(false)
+        return
+      }
+
+      if (tokenData.access_token) {
+        // Validate state parameter
+        if (!validateState(tokenData.state)) {
+          setError('Invalid state parameter')
+          cleanUrl()
+          setLoading(false)
+          return
+        }
+
+        // Store token and update state
+        storeToken(tokenData)
+        setToken(tokenData.access_token)
+        
+        // Clean URL
+        cleanUrl()
+      }
+      
+      setLoading(false)
+    }
+
+    initAuth()
   }, [])
 
   const handleLogout = () => {
-    authLogout()
+    clearToken()
     setToken(null)
+    setError(null)
   }
 
   if (loading) {
@@ -43,14 +71,34 @@ function App() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center max-w-md text-white">
+          <h2 className="text-2xl font-bold mb-4">Authentication Error</h2>
+          <p className="text-gray-300 mb-6">{error}</p>
+          <button
+            onClick={() => {
+              setError(null)
+              window.location.href = '/'
+            }}
+            className="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-900">
       <Routes>
-        <Route 
-          path="/" 
-          element={token ? <Dashboard token={token} onLogout={handleLogout} /> : <Home />} 
-        />
-        <Route path="/callback" element={<Callback />} />
+        <Route path="/*" element={
+          token ? 
+            <Dashboard token={token} onLogout={handleLogout} /> : 
+            <Home />
+        } />
       </Routes>
     </div>
   )
